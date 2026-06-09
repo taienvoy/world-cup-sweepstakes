@@ -1,0 +1,153 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Anton", system-ui, sans-serif;
+  --font-sans: "Sora", system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
+
+  --color-pitch-950: #04070f;
+  --color-pitch-900: #070b18;
+  --color-pitch-800: #0c1226;
+  --color-gold: #ffd24a;
+  --color-gold-deep: #d9962a;
+  --color-magenta: #ff2d7e;
+  --color-cyan: #36e3ff;
+  --color-violet: #8b5cff;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+/* ---- Themes ---- (Aurora is the :root default above) */
+/* Envoy brand: coral red + indigo on deep indigo */
+html[data-theme="envoy"] {
+  --color-gold: #fa4338;
+  --color-gold-deep: #d8362c;
+  --color-magenta: #ff5b8a;
+  --color-cyan: #6c8cff;
+  --color-violet: #5b4fe3;
+  --color-pitch-950: #09081f;
+  --color-pitch-900: #120f30;
+  --color-pitch-800: #1d1750;
+}
+/* Pitch: emerald + lime on deep grass green */
+html[data-theme="pitch"] {
+  --color-gold: #c6ff4a;
+  --color-gold-deep: #7bb528;
+  --color-magenta: #ff7a59;
+  --color-cyan: #2ee6a6;
+  --color-violet: #46d39a;
+  --color-pitch-950: #03120b;
+  --color-pitch-900: #06190f;
+  --color-pitch-800: #0d2719;
+}
+/* Sunset: amber + rose on dark plum */
+html[data-theme="sunset"] {
+  --color-gold: #ffb24a;
+  --color-gold-deep: #e07a1f;
+  --color-magenta: #ff4d6d;
+  --color-cyan: #ff8a3c;
+  --color-violet: #b15bff;
+  --color-pitch-950: #140617;
+  --color-pitch-900: #1d0a24;
+  --color-pitch-800: #2c1036;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-pitch-950);
+  color: #eaf0ff;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  transition: background-color 0.5s ease;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--color-gold) 35%, transparent);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--color-gold) 60%, transparent);
+}
+
+/* Utility: thin uppercase eyebrow text */
+.eyebrow {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.32em;
+  font-size: 0.68rem;
+}
+
+.text-stroke {
+  -webkit-text-stroke: 1px color-mix(in srgb, var(--color-gold) 70%, transparent);
+}
+
+/* Glassmorphism card base */
+.glass {
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, white 9%, transparent),
+    color-mix(in srgb, white 2%, transparent)
+  );
+  backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid color-mix(in srgb, white 12%, transparent);
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes float-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-gold) 55%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 14px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+.animate-float-up {
+  animation: float-up 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+/* Spinning conic gradient border for "live" accents */
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
