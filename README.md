@@ -11,6 +11,26 @@ npm run dev      # http://localhost:5173
 npm run build    # production build into dist/
 ```
 
+## Deploy (GitHub Pages)
+
+The site is static and ships with a deploy workflow (`.github/workflows/deploy.yml`).
+
+1. Create an empty repo on github.com (no README), then:
+   ```bash
+   git remote add origin https://github.com/<you>/<repo>.git
+   git push -u origin main
+   ```
+2. On GitHub: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+3. Done. Live at `https://<you>.github.io/<repo>/`.
+
+The workflow runs on every push, on **manual trigger** (Actions → Run workflow), and
+**hourly** — each run refreshes `scoring.json` from openfootball and redeploys, so the
+leaderboard stays live with no manual work. Asset paths are base-aware (`src/lib/asset.ts`
++ `VITE_BASE`), so it works under the Pages subpath automatically — no matter the repo name.
+
+For an office screen: open the URL in the display's browser (kiosk/full-screen). The
+chosen theme persists per-browser in localStorage.
+
 ## What's inside
 
 **Three pages** (hash router):
