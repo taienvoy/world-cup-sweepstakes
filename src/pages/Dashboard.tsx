@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import type { DrawResult } from "../lib/draw";
-import { matchWindow, focusMatch, matchStatus, type Match } from "../lib/fixtures";
+import { matchWindow, focusMatch, matchStatus, teamRecords, type Match } from "../lib/fixtures";
 import { PEOPLE, type Person } from "../data/people";
 import { useNow } from "../hooks/useNow";
 import { asset } from "../lib/asset";
@@ -33,6 +33,9 @@ export default function Dashboard({
   }, [draw]);
   const owner1 = focus?.side1.team ? owners.get(focus.side1.team.name) : undefined;
   const owner2 = focus?.side2.team ? owners.get(focus.side2.team.name) : undefined;
+
+  // each team's W/D/L form, recomputed as results come in
+  const records = useMemo(() => teamRecords(fixtures, now), [fixtures, now]);
 
   return (
     <main className="mx-auto max-w-7xl px-5 pb-24 sm:px-8">
@@ -205,7 +208,13 @@ export default function Dashboard({
         <SectionHeading kicker="Who drew what" title="The Squad" />
         <div className="mt-10 grid grid-cols-1 gap-x-5 gap-y-14 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {PEOPLE.map((p, i) => (
-            <PersonCard key={p.id} person={p} teams={draw.byPerson[p.id]} index={i} />
+            <PersonCard
+              key={p.id}
+              person={p}
+              teams={draw.byPerson[p.id]}
+              index={i}
+              records={records}
+            />
           ))}
         </div>
       </section>

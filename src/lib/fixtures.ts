@@ -150,6 +150,53 @@ export function focusMatch(all: Match[], now: DateTime): Match | undefined {
   return all.filter((m) => matchStatus(m, now) === "finished").at(-1);
 }
 
+export type Result = "W" | "D" | "L";
+export interface TeamRecord {
+  w: number;
+  d: number;
+  l: number;
+  gf: number;
+  ga: number;
+  pts: number;
+  results: Result[]; // chronological (group stage; knockout decided on the FT score)
+}
+
+/** Per-team W/D/L record from finished matches with a full-time score. */
+export function teamRecords(all: Match[], now: DateTime): Map<string, TeamRecord> {
+  const map = new Map<string, TeamRecord>();
+  const get = (name: string) => {
+    let r = map.get(name);
+    if (!r) {
+      r = { w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0, results: [] };
+      map.set(name, r);
+    }
+    return r;
+  };
+  const tally = (r: TeamRecord, for_: number, against: number) => {
+    r.gf += for_;
+    r.ga += against;
+    if (for_ > against) {
+      r.w++;
+      r.pts += 3;
+      r.results.push("W");
+    } else if (for_ < against) {
+      r.l++;
+      r.results.push("L");
+    } else {
+      r.d++;
+      r.pts += 1;
+      r.results.push("D");
+    }
+  };
+  for (const m of all) {
+    if (matchStatus(m, now) !== "finished" || !m.score) continue;
+    const [a, b] = m.score.ft;
+    if (m.side1.team) tally(get(m.side1.team.name), a, b);
+    if (m.side2.team) tally(get(m.side2.team.name), b, a);
+  }
+  return map;
+}
+
 export function matchesForTeam(all: Match[], teamName: string): Match[] {
   return all.filter(
     (m) => m.side1.team?.name === teamName || m.side2.team?.name === teamName,

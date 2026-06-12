@@ -1,16 +1,46 @@
 import { motion } from "framer-motion";
 import type { Person } from "../data/people";
 import type { Team } from "../data/teams";
+import type { Result, TeamRecord } from "../lib/fixtures";
 import Flag from "./Flag";
+
+const RESULT_STYLE: Record<Result, string> = {
+  W: "bg-emerald-500/85 text-emerald-50",
+  D: "bg-white/20 text-white/75",
+  L: "bg-rose-500/85 text-rose-50",
+};
+
+function FormPills({ record }: { record?: TeamRecord }) {
+  if (!record || record.results.length === 0) {
+    return <span className="text-[10px] text-white/25">—</span>;
+  }
+  return (
+    <span
+      className="flex items-center gap-0.5"
+      title={`${record.w}W ${record.d}D ${record.l}L · ${record.gf}-${record.ga} · ${record.pts} pts`}
+    >
+      {record.results.map((r, i) => (
+        <span
+          key={i}
+          className={`grid h-3.5 w-3.5 place-items-center rounded-[3px] text-[9px] font-bold ${RESULT_STYLE[r]}`}
+        >
+          {r}
+        </span>
+      ))}
+    </span>
+  );
+}
 
 export default function PersonCard({
   person,
   teams,
   index,
+  records,
 }: {
   person: Person;
   teams: Team[];
   index: number;
+  records: Map<string, TeamRecord>;
 }) {
   const lite = person.slots <= 2;
   return (
@@ -58,9 +88,10 @@ export default function PersonCard({
               style={pinned ? { boxShadow: `inset 0 0 0 1px ${t.color}` } : undefined}
             >
               <Flag code={t.code} title={t.name} className="h-5 w-7 rounded-[3px] shadow" />
-              <span className="flex-1 truncate text-sm font-medium">{t.name}</span>
+              <span className="min-w-0 flex-1 truncate text-sm font-medium">{t.name}</span>
               {pinned && <span className="text-[11px]" title="Guaranteed pick">⭐</span>}
-              <span className="font-mono text-[10px] text-white/40">{t.group}</span>
+              <FormPills record={records.get(t.name)} />
+              <span className="w-3 text-right font-mono text-[10px] text-white/40">{t.group}</span>
             </li>
           );
         })}
