@@ -17,7 +17,15 @@ interface RawMatch {
   team2: string;
   group?: string;
   ground?: string;
+  score?: { ft?: [number, number]; ht?: [number, number] };
 }
+
+/** A match a team has been knocked out / decided is FINISHED once openfootball has a
+ *  full-time score. Otherwise we infer status from the clock. */
+export type MatchStatus = "upcoming" | "live" | "finished";
+
+// Matches run ~2h; allow a buffer before we assume a result the feed hasn't posted yet.
+const LIVE_WINDOW_MIN = 130;
 
 export interface Side {
   /** Real team if known, else null for a knockout placeholder. */
@@ -35,6 +43,16 @@ export interface Match {
   side1: Side;
   side2: Side;
   isKnockout: boolean;
+  score?: { ft: [number, number]; ht?: [number, number] };
+}
+
+/** Live status relative to `now`. A full-time score makes it definitively finished;
+ *  otherwise we use the clock (and assume finished once the live window has elapsed). */
+export function matchStatus(m: Match, now: DateTime): MatchStatus {
+  if (m.score) return "finished";
+  if (now < m.kickoff) return "upcoming";
+  if (now < m.kickoff.plus({ minutes: LIVE_WINDOW_MIN })) return "live";
+  return "finished";
 }
 
 const PLACEHOLDER_LABELS: Record<string, string> = {};
@@ -69,6 +87,7 @@ function normalize(raw: RawMatch[]): Match[] {
       const { dt, offset } = parseKickoff(r.date, r.time);
       const side1 = toSide(r.team1);
       const side2 = toSide(r.team2);
+      const ft = r.score?.ft;
       return {
         round: r.round,
         group: r.group,
@@ -78,6 +97,7 @@ function normalize(raw: RawMatch[]): Match[] {
         side1,
         side2,
         isKnockout: !side1.team || !side2.team || !r.group,
+        score: ft ? { ft, ht: r.score?.ht } : undefined,
       };
     })
     .filter((m) => m.kickoff.isValid)
@@ -104,8 +124,30 @@ export async function refreshFixtures(): Promise<Match[]> {
   return loadFixturesSync();
 }
 
-export function upcoming(all: Match[], from: DateTime, limit = 12): Match[] {
-  return all.filter((m) => m.kickoff >= from.minus({ hours: 2 })).slice(0, limit);
+/** A sliding window for the match strip: a few just-finished results, any live games,
+ *  then upcoming fixtures. Advances automatically as `now` moves forward. */
+export function matchWindow(all: Match[], now: DateTime, recent = 3, ahead = 11): Match[] {
+  const live: Match[] = [];
+  const upcoming: Match[] = [];
+  const finished: Match[] = [];
+  for (const m of all) {
+    const s = matchStatus(m, now);
+    if (s === "live") live.push(m);
+    else if (s === "upcoming") upcoming.push(m);
+    else finished.push(m);
+  }
+  const recentFinished = finished.slice(-recent); // most recent results
+  return [...recentFinished, ...live, ...upcoming.slice(0, ahead)];
+}
+
+/** The match to feature in the hero: a live game if any, else the next kickoff,
+ *  else the most recent result. */
+export function focusMatch(all: Match[], now: DateTime): Match | undefined {
+  const live = all.find((m) => matchStatus(m, now) === "live");
+  if (live) return live;
+  const next = all.find((m) => matchStatus(m, now) === "upcoming");
+  if (next) return next;
+  return all.filter((m) => matchStatus(m, now) === "finished").at(-1);
 }
 
 export function matchesForTeam(all: Match[], teamName: string): Match[] {

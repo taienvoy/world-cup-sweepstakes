@@ -95,7 +95,8 @@ async function main() {
   let topScorer = null;
   const top = Object.entries(tally).sort((a, b) => b[1].goals - a[1].goals)[0];
   if (top && top[1].goals > 0) {
-    topScorer = { team: top[1].team, detail: `${top[0]} — ${top[1].goals} goals` };
+    const g = top[1].goals;
+    topScorer = { team: top[1].team, detail: `${top[0]} — ${g} goal${g === 1 ? "" : "s"}` };
   }
 
   // ---- First own goal (chronological). Award the COMMITTING team (the player's nation,

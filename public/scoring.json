@@ -1,12 +1,18 @@
 {
-  "updatedAt": "2026-06-09T11:13:57.297Z",
-  "matchesPlayed": 0,
-  "source": "openfootball",
+  "updatedAt": "2026-06-12T12:47:08.272Z",
+  "matchesPlayed": 2,
+  "source": "openfootball + manual cards",
   "outcomes": {
     "winner": null,
-    "firstRed": null,
+    "firstRed": {
+      "team": "South Africa",
+      "detail": "First red card of the tournament"
+    },
     "mostYellows": null,
     "firstOwnGoal": null,
-    "topScorer": null
+    "topScorer": {
+      "team": "Mexico",
+      "detail": "Julián Quiñones — 1 goals"
+    }
   }
 }

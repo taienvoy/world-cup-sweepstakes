@@ -2,6 +2,6 @@
   "_comment": "Manual outcomes the free feed can't provide (cards). Fill these in when they happen — the poller merges any non-null key over the computed value. Use exact team names from src/data/teams.ts.",
   "_example": { "firstRed": { "team": "Uruguay", "detail": "37' — Ronald Araújo vs Spain" } },
 
-  "firstRed": null,
+  "firstRed": { "team": "South Africa", "detail": "First red card of the tournament" },
   "mostYellows": null
 }

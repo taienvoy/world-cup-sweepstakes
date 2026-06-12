@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import type { DrawResult } from "../lib/draw";
-import { upcoming, type Match } from "../lib/fixtures";
+import { matchWindow, focusMatch, matchStatus, type Match } from "../lib/fixtures";
 import { PEOPLE } from "../data/people";
 import { useNow } from "../hooks/useNow";
 import { asset } from "../lib/asset";
@@ -19,8 +19,10 @@ export default function Dashboard({
   fixtures: Match[];
 }) {
   const now = useNow();
-  const next = useMemo(() => upcoming(fixtures, now, 14), [fixtures, now]);
-  const opener = fixtures[0];
+  const window = useMemo(() => matchWindow(fixtures, now), [fixtures, now]);
+  const focus = useMemo(() => focusMatch(fixtures, now), [fixtures, now]);
+  const focusState = focus ? matchStatus(focus, now) : null;
+  const fft = focus?.score?.ft;
 
   return (
     <main className="mx-auto max-w-7xl px-5 pb-24 sm:px-8">
@@ -84,26 +86,51 @@ export default function Dashboard({
             className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 opacity-30 [animation:spin-slow_120s_linear_infinite]"
           />
           <div className="relative">
-            <span className="eyebrow text-cyan">Kick-off in</span>
-            {opener ? (
+            {focus ? (
               <>
-                <div className="mt-2 font-display text-5xl tracking-wide text-white sm:text-6xl">
-                  {countdown(opener.kickoff, now)}
-                </div>
+                {focusState === "live" ? (
+                  <span className="flex items-center gap-2 text-magenta">
+                    <span className="h-2 w-2 animate-ping rounded-full bg-magenta" />
+                    <span className="eyebrow">Live now</span>
+                  </span>
+                ) : focusState === "finished" ? (
+                  <span className="eyebrow text-white/55">Latest result</span>
+                ) : (
+                  <span className="eyebrow text-cyan">Kick-off in</span>
+                )}
+
+                {focusState === "upcoming" ? (
+                  <div className="mt-2 font-display text-5xl tracking-wide text-white sm:text-6xl">
+                    {countdown(focus.kickoff, now)}
+                  </div>
+                ) : (
+                  // Live or finished: show the scoreline big
+                  <div className="mt-3 flex items-center gap-4">
+                    {focus.side1.team && (
+                      <Flag code={focus.side1.team.code} className="h-9 w-14 rounded shadow" />
+                    )}
+                    <div className="font-display text-5xl tracking-wide text-white sm:text-6xl">
+                      {fft ? `${fft[0]}–${fft[1]}` : focusState === "live" ? "vs" : "–"}
+                    </div>
+                    {focus.side2.team && (
+                      <Flag code={focus.side2.team.code} className="h-9 w-14 rounded shadow" />
+                    )}
+                  </div>
+                )}
+
                 <div className="mt-4 flex items-center gap-3">
-                  {opener.side1.team && (
-                    <Flag code={opener.side1.team.code} className="h-8 w-12 rounded shadow" />
+                  {focusState === "upcoming" && focus.side1.team && (
+                    <Flag code={focus.side1.team.code} className="h-8 w-12 rounded shadow" />
                   )}
                   <span className="font-semibold">
-                    {opener.side1.label} <span className="text-white/40">vs</span>{" "}
-                    {opener.side2.label}
+                    {focus.side1.label} <span className="text-white/40">vs</span> {focus.side2.label}
                   </span>
-                  {opener.side2.team && (
-                    <Flag code={opener.side2.team.code} className="h-8 w-12 rounded shadow" />
+                  {focusState === "upcoming" && focus.side2.team && (
+                    <Flag code={focus.side2.team.code} className="h-8 w-12 rounded shadow" />
                   )}
                 </div>
                 <div className="mt-2 text-sm text-white/55">
-                  {localStamp(opener.kickoff)} {localTzAbbrev(opener.kickoff)} · {opener.ground}
+                  {localStamp(focus.kickoff)} {localTzAbbrev(focus.kickoff)} · {focus.ground}
                 </div>
               </>
             ) : (
@@ -114,12 +141,12 @@ export default function Dashboard({
         </div>
       </section>
 
-      {/* UPCOMING MATCHES */}
+      {/* MATCH TRACKER — recent results · live · upcoming (auto-advances) */}
       <section className="mt-6">
-        <SectionHeading kicker="Live schedule" title="Upcoming Matches" />
+        <SectionHeading kicker="Live schedule" title="Results & Fixtures" />
         <div className="-mx-5 flex snap-x gap-4 overflow-x-auto px-5 pb-4 sm:-mx-8 sm:px-8">
-          {next.map((m, i) => (
-            <div key={i} className="snap-start">
+          {window.map((m, i) => (
+            <div key={`${m.kickoff.toMillis()}-${i}`} className="snap-start">
               <MatchCard match={m} now={now} />
             </div>
           ))}

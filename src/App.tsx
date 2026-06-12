@@ -22,7 +22,15 @@ export default function App() {
 
   const [fixtures, setFixtures] = useState<Match[]>(() => loadFixturesSync());
   useEffect(() => {
-    refreshFixtures().then(setFixtures);
+    let alive = true;
+    const pull = () => refreshFixtures().then((f) => alive && setFixtures(f));
+    pull();
+    // Re-fetch scores/results periodically so the board updates without a reload.
+    const id = setInterval(pull, 120_000);
+    return () => {
+      alive = false;
+      clearInterval(id);
+    };
   }, []);
 
   const reroll = (next: number) => {
