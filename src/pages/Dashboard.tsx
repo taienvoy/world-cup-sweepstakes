@@ -3,12 +3,13 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import type { DrawResult } from "../lib/draw";
 import { matchWindow, focusMatch, matchStatus, type Match } from "../lib/fixtures";
-import { PEOPLE } from "../data/people";
+import { PEOPLE, type Person } from "../data/people";
 import { useNow } from "../hooks/useNow";
 import { asset } from "../lib/asset";
 import { countdown, localStamp, localTzAbbrev, localZone } from "../lib/format";
 import PersonCard from "../components/PersonCard";
 import MatchCard from "../components/MatchCard";
+import OwnerAvatar from "../components/OwnerAvatar";
 import Flag from "../components/Flag";
 
 export default function Dashboard({
@@ -23,6 +24,15 @@ export default function Dashboard({
   const focus = useMemo(() => focusMatch(fixtures, now), [fixtures, now]);
   const focusState = focus ? matchStatus(focus, now) : null;
   const fft = focus?.score?.ft;
+
+  // team name -> the person who drew it (for the "whose team is playing" avatars)
+  const owners = useMemo(() => {
+    const m = new Map<string, Person>();
+    for (const p of PEOPLE) for (const t of draw.byPerson[p.id] ?? []) m.set(t.name, p);
+    return m;
+  }, [draw]);
+  const owner1 = focus?.side1.team ? owners.get(focus.side1.team.name) : undefined;
+  const owner2 = focus?.side2.team ? owners.get(focus.side2.team.name) : undefined;
 
   return (
     <main className="mx-auto max-w-7xl px-5 pb-24 sm:px-8">
@@ -107,28 +117,65 @@ export default function Dashboard({
                   // Live or finished: show the scoreline big
                   <div className="mt-3 flex items-center gap-4">
                     {focus.side1.team && (
-                      <Flag code={focus.side1.team.code} className="h-9 w-14 rounded shadow" />
+                      <span className="flex items-center gap-2">
+                        <OwnerAvatar person={owner1} size={28} />
+                        <Flag code={focus.side1.team.code} className="h-9 w-14 rounded shadow" />
+                      </span>
                     )}
                     <div className="font-display text-5xl tracking-wide text-white sm:text-6xl">
                       {fft ? `${fft[0]}–${fft[1]}` : focusState === "live" ? "vs" : "–"}
                     </div>
                     {focus.side2.team && (
-                      <Flag code={focus.side2.team.code} className="h-9 w-14 rounded shadow" />
+                      <span className="flex items-center gap-2">
+                        <OwnerAvatar person={owner2} size={28} />
+                        <Flag code={focus.side2.team.code} className="h-9 w-14 rounded shadow" />
+                      </span>
                     )}
                   </div>
                 )}
 
                 <div className="mt-4 flex items-center gap-3">
                   {focusState === "upcoming" && focus.side1.team && (
-                    <Flag code={focus.side1.team.code} className="h-8 w-12 rounded shadow" />
+                    <span className="flex items-center gap-2">
+                      <OwnerAvatar person={owner1} size={26} />
+                      <Flag code={focus.side1.team.code} className="h-8 w-12 rounded shadow" />
+                    </span>
                   )}
                   <span className="font-semibold">
                     {focus.side1.label} <span className="text-white/40">vs</span> {focus.side2.label}
                   </span>
                   {focusState === "upcoming" && focus.side2.team && (
-                    <Flag code={focus.side2.team.code} className="h-8 w-12 rounded shadow" />
+                    <span className="flex items-center gap-2">
+                      <OwnerAvatar person={owner2} size={26} />
+                      <Flag code={focus.side2.team.code} className="h-8 w-12 rounded shadow" />
+                    </span>
                   )}
                 </div>
+
+                {/* whose teams are these */}
+                {(owner1 || owner2) && (
+                  <div className="mt-2 flex items-center gap-2 text-sm">
+                    <span className="text-white/55">
+                      {owner1 ? (
+                        <>
+                          <span className="text-gold">{owner1.name}</span>'s {focus.side1.label}
+                        </>
+                      ) : (
+                        focus.side1.label
+                      )}
+                    </span>
+                    <span className="text-white/30">vs</span>
+                    <span className="text-white/55">
+                      {owner2 ? (
+                        <>
+                          <span className="text-gold">{owner2.name}</span>'s {focus.side2.label}
+                        </>
+                      ) : (
+                        focus.side2.label
+                      )}
+                    </span>
+                  </div>
+                )}
                 <div className="mt-2 text-sm text-white/55">
                   {localStamp(focus.kickoff)} {localTzAbbrev(focus.kickoff)} · {focus.ground}
                 </div>
@@ -147,7 +194,7 @@ export default function Dashboard({
         <div className="-mx-5 flex snap-x gap-4 overflow-x-auto px-5 pb-4 sm:-mx-8 sm:px-8">
           {window.map((m, i) => (
             <div key={`${m.kickoff.toMillis()}-${i}`} className="snap-start">
-              <MatchCard match={m} now={now} />
+              <MatchCard match={m} now={now} owners={owners} />
             </div>
           ))}
         </div>

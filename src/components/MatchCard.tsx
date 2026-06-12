@@ -1,23 +1,24 @@
 import { DateTime } from "luxon";
 import { matchStatus, type Match, type Side } from "../lib/fixtures";
 import { countdown, localDay, localTime, venueTime } from "../lib/format";
+import type { Person } from "../data/people";
 import Flag from "./Flag";
+import OwnerAvatar from "./OwnerAvatar";
 
 function SideRow({
   side,
-  align,
+  owner,
   goals,
   dim,
 }: {
   side: Side;
-  align: "left" | "right";
+  owner?: Person | null;
   goals?: number;
   dim?: boolean;
 }) {
   return (
-    <div
-      className={`flex items-center gap-2.5 ${align === "right" ? "flex-row-reverse text-right" : ""}`}
-    >
+    <div className="flex items-center gap-2.5">
+      <OwnerAvatar person={owner} size={22} />
       {side.team ? (
         <Flag code={side.team.code} title={side.team.name} className="h-7 w-10 rounded shadow-md" />
       ) : (
@@ -35,7 +36,15 @@ function SideRow({
   );
 }
 
-export default function MatchCard({ match, now }: { match: Match; now: DateTime }) {
+export default function MatchCard({
+  match,
+  now,
+  owners,
+}: {
+  match: Match;
+  now: DateTime;
+  owners: Map<string, Person>;
+}) {
   const status = matchStatus(match, now);
   const live = status === "live";
   const finished = status === "finished";
@@ -69,13 +78,13 @@ export default function MatchCard({ match, now }: { match: Match; now: DateTime 
       <div className="flex flex-col gap-1.5">
         <SideRow
           side={match.side1}
-          align="left"
+          owner={match.side1.team ? owners.get(match.side1.team.name) : undefined}
           goals={ft ? ft[0] : undefined}
           dim={finished && winner === 2}
         />
         <SideRow
           side={match.side2}
-          align="left"
+          owner={match.side2.team ? owners.get(match.side2.team.name) : undefined}
           goals={ft ? ft[1] : undefined}
           dim={finished && winner === 1}
         />
