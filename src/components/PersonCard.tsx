@@ -1,9 +1,11 @@
 import { motion } from "framer-motion";
 import type { Person } from "../data/people";
-import type { Team } from "../data/teams";
+import { TEAM_BY_NAME, type Team } from "../data/teams";
 import type { Result, TeamRecord } from "../lib/fixtures";
 import type { Standing } from "../lib/scoring";
 import Flag from "./Flag";
+
+const MEDAL = ["🥇", "🥈", "🥉"];
 
 const RESULT_STYLE: Record<Result, string> = {
   W: "bg-emerald-500/85 text-emerald-50",
@@ -47,6 +49,8 @@ export default function PersonCard({
 }) {
   const lite = person.slots <= 2;
   const pts = standing?.total ?? 0;
+  const extra = (standing?.bonus ?? 0) + (standing?.predictionPoints ?? 0);
+  const predictions = standing?.predictions ?? [];
   return (
     <motion.div
       initial={{ opacity: 0, y: 24 }}
@@ -82,20 +86,20 @@ export default function PersonCard({
         {teams.length} {teams.length === 1 ? "team" : "teams"}
       </div>
 
-      {/* points badge: match points + bonuses */}
+      {/* points badge: match points + bonuses + predictions */}
       <div
         className="mt-2 flex items-baseline gap-1.5 rounded-full bg-gold/15 px-3 py-1"
         title={
           standing
-            ? `${standing.matchPoints} from games + ${standing.bonus} bonus`
+            ? `${standing.matchPoints} from games + ${standing.bonus} bonuses + ${standing.predictionPoints} predictions`
             : undefined
         }
       >
         <span className="font-display text-lg leading-none text-gold">{pts}</span>
         <span className="text-[11px] font-medium text-gold/70">pts</span>
-        {standing && standing.bonus > 0 && (
+        {standing && extra > 0 && (
           <span className="text-[10px] text-white/40">
-            · {standing.matchPoints}+{standing.bonus}
+            · {standing.matchPoints}+{extra}
           </span>
         )}
       </div>
@@ -118,6 +122,39 @@ export default function PersonCard({
           );
         })}
       </ul>
+
+      {/* podium predictions */}
+      {predictions.length > 0 && (
+        <div className="mt-3 w-full border-t border-white/10 pt-3">
+          <div className="eyebrow mb-1.5 text-white/35">Podium picks</div>
+          <div className="flex items-center gap-2">
+            {predictions.map((h) => {
+              const team = TEAM_BY_NAME[h.team];
+              const hit = h.actual > 0;
+              return (
+                <div
+                  key={h.team}
+                  title={
+                    hit
+                      ? `${MEDAL[h.predicted - 1]} ${h.team} — finished #${h.actual} (+${h.points})`
+                      : `${MEDAL[h.predicted - 1]} ${h.team}`
+                  }
+                  className={`flex items-center gap-1 rounded-lg px-1.5 py-1 ${
+                    hit ? "bg-gold/15 ring-1 ring-gold/50" : "bg-white/5"
+                  }`}
+                >
+                  <span className="text-xs leading-none">{MEDAL[h.predicted - 1]}</span>
+                  {team ? (
+                    <Flag code={team.code} title={h.team} className="h-4 w-6 rounded-[2px] shadow" />
+                  ) : (
+                    <span className="text-[10px] text-white/60">{h.team}</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }

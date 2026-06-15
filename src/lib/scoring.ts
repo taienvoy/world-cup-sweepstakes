@@ -7,7 +7,7 @@
 import type { DrawResult } from "./draw";
 import type { TeamRecord } from "./fixtures";
 import { asset } from "./asset";
-import { PEOPLE, type Person } from "../data/people";
+import { PEOPLE, PREDICTIONS, type Person } from "../data/people";
 import { TEAM_BY_NAME, type Team } from "../data/teams";
 
 export type BonusKey =
@@ -55,11 +55,31 @@ export interface Outcome {
   detail?: string; // e.g. player name, minute, count — shown as context
 }
 
+/** Final tournament podium (team names), filled in once the knockouts are played. */
+export interface Podium {
+  first?: string;
+  second?: string;
+  third?: string;
+}
+
 export interface ScoringState {
   updatedAt: string | null;
   matchesPlayed: number;
   source: string; // "API-Football" | "Sample" | "Pre-tournament"
   outcomes: Partial<Record<BonusKey, Outcome>>;
+  podium?: Podium;
+}
+
+// Podium-prediction points: a pick landing in its EXACT predicted slot scores big;
+// landing anywhere on the podium scores a consolation.
+export const PODIUM_EXACT: Record<number, number> = { 1: 40, 2: 25, 3: 15 };
+export const PODIUM_ON = 10; // right team, wrong slot
+
+export interface PredictionHit {
+  team: string;
+  predicted: number; // 1 | 2 | 3 (slot the person picked)
+  actual: number; // 0 = not on podium, else 1 | 2 | 3
+  points: number;
 }
 
 export const EMPTY_STATE: ScoringState = {
@@ -79,12 +99,28 @@ export interface ResolvedBonus extends BonusDef {
 export interface Standing {
   person: Person;
   contribution: number;
-  bonus: number; // points from the 5 bonuses
+  bonus: number; // points from the bonuses
   matchPoints: number; // 3 per win + 1 per draw, across all their teams (Prem-style)
+  predictionPoints: number; // from podium predictions
+  predictions: PredictionHit[]; // their picks + how each scored
   played: number; // matches their teams have played
-  total: number; // bonus + matchPoints
+  total: number; // bonus + matchPoints + predictionPoints
   bonuses: BonusKey[]; // bonuses this person currently holds
   teamCount: number;
+}
+
+/** Score a person's podium picks against the actual podium. */
+export function scorePredictions(personId: string, podium?: Podium): PredictionHit[] {
+  const picks = PREDICTIONS[personId];
+  if (!picks) return [];
+  const actualOf = (team: string) =>
+    podium?.first === team ? 1 : podium?.second === team ? 2 : podium?.third === team ? 3 : 0;
+  return picks.map((team, i) => {
+    const predicted = i + 1;
+    const actual = actualOf(team);
+    const points = actual === 0 ? 0 : actual === predicted ? PODIUM_EXACT[predicted] : PODIUM_ON;
+    return { team, predicted, actual, points };
+  });
 }
 
 export interface Standings {
@@ -144,13 +180,17 @@ export function computeStandings(
       }
     }
     const bonus = bonusPts[p.id];
+    const predictions = scorePredictions(p.id, state.podium);
+    const predictionPoints = predictions.reduce((s, h) => s + h.points, 0);
     return {
       person: p,
       contribution: contributionFor(p.id),
       bonus,
       matchPoints,
+      predictionPoints,
+      predictions,
       played,
-      total: bonus + matchPoints,
+      total: bonus + matchPoints + predictionPoints,
       bonuses: held[p.id],
       teamCount: draw.byPerson[p.id]?.length ?? 0,
     };
@@ -196,4 +236,5 @@ export const SAMPLE_STATE: ScoringState = {
     firstGoal: { team: "Mexico", detail: "9' — opening match" },
     cleanSheets: { team: "Morocco", detail: "5 clean sheets" },
   },
+  podium: { first: "Brazil", second: "France", third: "Argentina" },
 };

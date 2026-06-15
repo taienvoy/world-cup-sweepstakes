@@ -29,3 +29,12 @@ export const PEOPLE: Person[] = [
 export const PINNED: Record<string, string> = {
   quentin: "Brazil",
 };
+
+// Optional podium predictions: each person's guess at who finishes [1st, 2nd, 3rd].
+// Bonus points are awarded when a pick lands on the real podium (see lib/scoring.ts).
+// Team names must match data/teams.ts (e.g. "Côte d'Ivoire" -> "Ivory Coast").
+export const PREDICTIONS: Record<string, [string, string, string]> = {
+  lydia: ["France", "Senegal", "Ivory Coast"],
+  taiwo: ["England", "France", "Netherlands"],
+  // others TBC
+};

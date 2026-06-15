@@ -228,6 +228,12 @@ function LeaderRow({
               <span className="text-gold">{row.bonus}</span> bonus
             </>
           )}
+          {row.predictionPoints > 0 && (
+            <>
+              {" · "}
+              <span className="text-violet">{row.predictionPoints}</span> picks
+            </>
+          )}
         </div>
       </div>
     </motion.div>

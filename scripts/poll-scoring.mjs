@@ -65,6 +65,7 @@ if (process.argv.includes("--sample")) {
       firstGoal: { team: "Mexico", detail: "9' vs South Africa" },
       cleanSheets: { team: "Morocco", detail: "5 clean sheets" },
     },
+    podium: { first: "Brazil", second: "France", third: "Argentina" },
   });
   process.exit(0);
 }
@@ -189,9 +190,26 @@ async function main() {
     }
   }
 
+  // ---- Podium: 1st/2nd from the Final, 3rd from the third-place match ----
+  // (A penalty-shootout result reads as a draw here, so set podium manually then.)
+  const podium = {};
+  if (final) {
+    const [a, b] = final.score.ft;
+    if (a !== b) {
+      podium.first = a > b ? final.team1 : final.team2;
+      podium.second = a > b ? final.team2 : final.team1;
+    }
+  }
+  const third = played.find((m) => /third/i.test(m.round || ""));
+  if (third) {
+    const [a, b] = third.score.ft;
+    if (a !== b) podium.third = a > b ? third.team1 : third.team2;
+  }
+
   // ---- Manual overrides (cards live here; any key wins over the computed value) ----
   const ov = loadOverrides();
   const pick = (key, computed) => ov[key] ?? computed;
+  const mergedPodium = { ...(Object.keys(podium).length ? podium : {}), ...(ov.podium || {}) };
 
   writeOut({
     updatedAt: new Date().toISOString(),
@@ -209,6 +227,7 @@ async function main() {
       firstGoal: pick("firstGoal", firstGoal),
       cleanSheets: pick("cleanSheets", cleanSheets),
     },
+    podium: Object.keys(mergedPodium).length ? mergedPodium : undefined,
   });
 }
 
