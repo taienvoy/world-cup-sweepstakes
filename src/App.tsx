@@ -48,7 +48,7 @@ export default function App() {
       <Nav />
       <Routes>
         <Route path="/" element={<Dashboard draw={draw} fixtures={fixtures} />} />
-        <Route path="/leaderboard" element={<Scoring draw={draw} />} />
+        <Route path="/leaderboard" element={<Scoring draw={draw} fixtures={fixtures} />} />
         <Route
           path="/draw"
           element={

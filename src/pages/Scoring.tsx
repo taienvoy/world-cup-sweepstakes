@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { DateTime } from "luxon";
 import type { DrawResult } from "../lib/draw";
+import { teamRecords, type Match } from "../lib/fixtures";
+import { useNow } from "../hooks/useNow";
 import {
   BONUSES,
   POT_TOTAL,
@@ -15,7 +17,8 @@ import {
 } from "../lib/scoring";
 import Flag from "../components/Flag";
 
-export default function Scoring({ draw }: { draw: DrawResult }) {
+export default function Scoring({ draw, fixtures }: { draw: DrawResult; fixtures: Match[] }) {
+  const now = useNow(30_000);
   const [live, setLive] = useState<ScoringState>(EMPTY_STATE);
   const [sample, setSample] = useState(false);
 
@@ -32,9 +35,10 @@ export default function Scoring({ draw }: { draw: DrawResult }) {
   }, []);
 
   const state = sample ? SAMPLE_STATE : live;
+  const records = useMemo(() => teamRecords(fixtures, now), [fixtures, now]);
   const { bonuses, table, potClaimed } = useMemo(
-    () => computeStandings(state, draw),
-    [state, draw],
+    () => computeStandings(state, draw, records),
+    [state, draw, records],
   );
 
   const updated = state.updatedAt ? DateTime.fromISO(state.updatedAt) : null;
@@ -48,8 +52,9 @@ export default function Scoring({ draw }: { draw: DrawResult }) {
           <span className="eyebrow text-gold">In-house points · live</span>
           <h1 className="font-display text-5xl tracking-tight sm:text-6xl">THE LEADERBOARD</h1>
           <p className="mt-2 max-w-xl text-white/60">
-            A {POT_TOTAL}-point pot, redistributed through five bonuses. Multiple teams can
-            win — every match counts.
+            <span className="text-white/80">3 pts</span> per win,{" "}
+            <span className="text-white/80">1 pt</span> per draw across all your teams — plus a{" "}
+            {POT_TOTAL}-point bonus pot from five twists. Every match counts.
           </p>
         </div>
 
@@ -181,7 +186,7 @@ function LeaderRow({
   rank: number;
   bonuses: ResolvedBonus[];
 }) {
-  const leader = rank === 1 && row.won > 0;
+  const leader = rank === 1 && row.total > 0;
   const held = bonuses.filter((b) => b.owner?.id === row.person.id);
   return (
     <motion.div
@@ -208,29 +213,29 @@ function LeaderRow({
           <span className="font-semibold">{row.person.name}</span>
           <span className="text-[11px] text-white/35">{row.teamCount} teams</span>
         </div>
-        <div className="mt-0.5 flex flex-wrap gap-1">
-          {held.length ? (
-            held.map((b) => (
-              <span
-                key={b.key}
-                title={`${b.label} (+${b.points})`}
-                className="rounded-full bg-gold/15 px-2 py-0.5 text-[10px] font-medium text-gold"
-              >
-                {b.icon} {b.short}
-              </span>
-            ))
-          ) : (
-            <span className="text-[11px] text-white/30">no bonuses yet</span>
-          )}
+        <div className="mt-0.5 flex flex-wrap items-center gap-1">
+          <span className="text-[11px] text-white/45">{row.played} played</span>
+          {held.map((b) => (
+            <span
+              key={b.key}
+              title={`${b.label} (+${b.points})`}
+              className="rounded-full bg-gold/15 px-2 py-0.5 text-[10px] font-medium text-gold"
+            >
+              {b.icon} {b.short}
+            </span>
+          ))}
         </div>
       </div>
       <div className="text-right">
-        <div className="font-display text-2xl leading-none">{row.won}</div>
-        <div
-          className={`text-[11px] ${row.net > 0 ? "text-cyan" : row.net < 0 ? "text-white/35" : "text-white/30"}`}
-        >
-          {row.net > 0 ? "+" : ""}
-          {row.net} net
+        <div className="font-display text-3xl leading-none">{row.total}</div>
+        <div className="mt-0.5 text-[11px] text-white/45">
+          <span className="text-cyan">{row.matchPoints}</span> games
+          {row.bonus > 0 && (
+            <>
+              {" · "}
+              <span className="text-gold">{row.bonus}</span> bonus
+            </>
+          )}
         </div>
       </div>
     </motion.div>

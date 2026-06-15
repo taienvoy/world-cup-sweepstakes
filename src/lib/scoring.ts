@@ -5,6 +5,7 @@
 // whoever OWNS the team that achieves each milestone.
 
 import type { DrawResult } from "./draw";
+import type { TeamRecord } from "./fixtures";
 import { asset } from "./asset";
 import { PEOPLE, type Person } from "../data/people";
 import { TEAM_BY_NAME, type Team } from "../data/teams";
@@ -68,8 +69,10 @@ export interface ResolvedBonus extends BonusDef {
 export interface Standing {
   person: Person;
   contribution: number;
-  won: number;
-  net: number; // won - contribution
+  bonus: number; // points from the 5 bonuses
+  matchPoints: number; // 3 per win + 1 per draw, across all their teams (Prem-style)
+  played: number; // matches their teams have played
+  total: number; // bonus + matchPoints
   bonuses: BonusKey[]; // bonuses this person currently holds
   teamCount: number;
 }
@@ -80,6 +83,9 @@ export interface Standings {
   potClaimed: number;
 }
 
+/** League points: 3 for a win, 1 for a draw, 0 for a loss. */
+export const POINTS = { win: 3, draw: 1, loss: 0 } as const;
+
 /** Reverse map: team name -> the person who drew it. */
 function ownerIndex(draw: DrawResult): Map<string, Person> {
   const idx = new Map<string, Person>();
@@ -89,7 +95,11 @@ function ownerIndex(draw: DrawResult): Map<string, Person> {
   return idx;
 }
 
-export function computeStandings(state: ScoringState, draw: DrawResult): Standings {
+export function computeStandings(
+  state: ScoringState,
+  draw: DrawResult,
+  records?: Map<string, TeamRecord>,
+): Standings {
   const owners = ownerIndex(draw);
 
   const bonuses: ResolvedBonus[] = BONUSES.map((b) => {
@@ -99,30 +109,47 @@ export function computeStandings(state: ScoringState, draw: DrawResult): Standin
     return { ...b, team, owner, detail: oc?.detail, decided: !!oc?.team };
   });
 
-  const won: Record<string, number> = {};
+  const bonusPts: Record<string, number> = {};
   const held: Record<string, BonusKey[]> = {};
   for (const p of PEOPLE) {
-    won[p.id] = 0;
+    bonusPts[p.id] = 0;
     held[p.id] = [];
   }
   for (const b of bonuses) {
     if (b.owner) {
-      won[b.owner.id] += b.points;
+      bonusPts[b.owner.id] += b.points;
       held[b.owner.id].push(b.key);
     }
   }
 
   const table: Standing[] = PEOPLE.map((p) => {
-    const c = contributionFor(p.id);
+    // Prem-style match points across this person's teams (3 win / 1 draw / 0 loss).
+    let matchPoints = 0;
+    let played = 0;
+    for (const t of draw.byPerson[p.id] ?? []) {
+      const r = records?.get(t.name);
+      if (r) {
+        matchPoints += r.pts;
+        played += r.w + r.d + r.l;
+      }
+    }
+    const bonus = bonusPts[p.id];
     return {
       person: p,
-      contribution: c,
-      won: won[p.id],
-      net: won[p.id] - c,
+      contribution: contributionFor(p.id),
+      bonus,
+      matchPoints,
+      played,
+      total: bonus + matchPoints,
       bonuses: held[p.id],
       teamCount: draw.byPerson[p.id]?.length ?? 0,
     };
-  }).sort((a, b) => b.won - a.won || b.net - a.net || a.person.name.localeCompare(b.person.name));
+  }).sort(
+    (a, b) =>
+      b.total - a.total ||
+      b.matchPoints - a.matchPoints ||
+      a.person.name.localeCompare(b.person.name),
+  );
 
   const potClaimed = bonuses.filter((b) => b.decided).reduce((s, b) => s + b.points, 0);
   return { bonuses, table, potClaimed };
