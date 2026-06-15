@@ -38,5 +38,6 @@ export const PREDICTIONS: Record<string, [string, string, string]> = {
   taiwo: ["England", "France", "Netherlands"],
   francis: ["France", "Germany", "Argentina"],
   emily: ["England", "France", "Spain"],
+  quentin: ["Brazil", "France", "USA"],
   // others TBC
 };
