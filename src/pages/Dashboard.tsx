@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import type { DrawResult } from "../lib/draw";
 import { matchWindow, focusMatch, matchStatus, teamRecords, type Match } from "../lib/fixtures";
+import { computeStandings, type ScoringState, type Standing } from "../lib/scoring";
 import { PEOPLE, type Person } from "../data/people";
 import { useNow } from "../hooks/useNow";
 import { asset } from "../lib/asset";
@@ -15,9 +16,11 @@ import Flag from "../components/Flag";
 export default function Dashboard({
   draw,
   fixtures,
+  scoring,
 }: {
   draw: DrawResult;
   fixtures: Match[];
+  scoring: ScoringState;
 }) {
   const now = useNow();
   const window = useMemo(() => matchWindow(fixtures, now), [fixtures, now]);
@@ -36,6 +39,13 @@ export default function Dashboard({
 
   // each team's W/D/L form, recomputed as results come in
   const records = useMemo(() => teamRecords(fixtures, now), [fixtures, now]);
+
+  // per-person standings (match points + bonuses) for the squad badge
+  const standingByPerson = useMemo(() => {
+    const m = new Map<string, Standing>();
+    for (const s of computeStandings(scoring, draw, records).table) m.set(s.person.id, s);
+    return m;
+  }, [scoring, draw, records]);
 
   return (
     <main className="mx-auto max-w-7xl px-5 pb-24 sm:px-8">
@@ -214,6 +224,7 @@ export default function Dashboard({
               teams={draw.byPerson[p.id]}
               index={i}
               records={records}
+              standing={standingByPerson.get(p.id)}
             />
           ))}
         </div>

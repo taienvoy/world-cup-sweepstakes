@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import type { Person } from "../data/people";
 import type { Team } from "../data/teams";
 import type { Result, TeamRecord } from "../lib/fixtures";
+import type { Standing } from "../lib/scoring";
 import Flag from "./Flag";
 
 const RESULT_STYLE: Record<Result, string> = {
@@ -36,13 +37,16 @@ export default function PersonCard({
   teams,
   index,
   records,
+  standing,
 }: {
   person: Person;
   teams: Team[];
   index: number;
   records: Map<string, TeamRecord>;
+  standing?: Standing;
 }) {
   const lite = person.slots <= 2;
+  const pts = standing?.total ?? 0;
   return (
     <motion.div
       initial={{ opacity: 0, y: 24 }}
@@ -76,6 +80,24 @@ export default function PersonCard({
       </div>
       <div className="eyebrow mt-0.5 text-white/40">
         {teams.length} {teams.length === 1 ? "team" : "teams"}
+      </div>
+
+      {/* points badge: match points + bonuses */}
+      <div
+        className="mt-2 flex items-baseline gap-1.5 rounded-full bg-gold/15 px-3 py-1"
+        title={
+          standing
+            ? `${standing.matchPoints} from games + ${standing.bonus} bonus`
+            : undefined
+        }
+      >
+        <span className="font-display text-lg leading-none text-gold">{pts}</span>
+        <span className="text-[11px] font-medium text-gold/70">pts</span>
+        {standing && standing.bonus > 0 && (
+          <span className="text-[10px] text-white/40">
+            · {standing.matchPoints}+{standing.bonus}
+          </span>
+        )}
       </div>
 
       <ul className="mt-4 flex w-full flex-col gap-2">

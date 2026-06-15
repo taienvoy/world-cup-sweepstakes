@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { DateTime } from "luxon";
 import type { DrawResult } from "../lib/draw";
@@ -8,33 +8,25 @@ import {
   BONUSES,
   POT_TOTAL,
   SAMPLE_STATE,
-  EMPTY_STATE,
   computeStandings,
-  loadScoring,
   type ScoringState,
   type ResolvedBonus,
   type Standing,
 } from "../lib/scoring";
 import Flag from "../components/Flag";
 
-export default function Scoring({ draw, fixtures }: { draw: DrawResult; fixtures: Match[] }) {
+export default function Scoring({
+  draw,
+  fixtures,
+  scoring,
+}: {
+  draw: DrawResult;
+  fixtures: Match[];
+  scoring: ScoringState;
+}) {
   const now = useNow(30_000);
-  const [live, setLive] = useState<ScoringState>(EMPTY_STATE);
   const [sample, setSample] = useState(false);
-
-  // Poll the poller-written scoring.json every 60s.
-  useEffect(() => {
-    let alive = true;
-    const tick = () => loadScoring().then((s) => alive && setLive(s));
-    tick();
-    const id = setInterval(tick, 60_000);
-    return () => {
-      alive = false;
-      clearInterval(id);
-    };
-  }, []);
-
-  const state = sample ? SAMPLE_STATE : live;
+  const state = sample ? SAMPLE_STATE : scoring;
   const records = useMemo(() => teamRecords(fixtures, now), [fixtures, now]);
   const { bonuses, table, potClaimed } = useMemo(
     () => computeStandings(state, draw, records),
@@ -54,7 +46,7 @@ export default function Scoring({ draw, fixtures }: { draw: DrawResult; fixtures
           <p className="mt-2 max-w-xl text-white/60">
             <span className="text-white/80">3 pts</span> per win,{" "}
             <span className="text-white/80">1 pt</span> per draw across all your teams — plus a{" "}
-            {POT_TOTAL}-point bonus pot from five twists. Every match counts.
+            {POT_TOTAL}-point bonus pot from ten twists. Every match counts.
           </p>
         </div>
 

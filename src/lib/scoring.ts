@@ -15,7 +15,12 @@ export type BonusKey =
   | "firstRed"
   | "mostYellows"
   | "firstOwnGoal"
-  | "topScorer";
+  | "topScorer"
+  | "firstGoal"
+  | "biggestWin"
+  | "mostGoals"
+  | "cleanSheets"
+  | "firstHatTrick";
 
 export interface BonusDef {
   key: BonusKey;
@@ -29,9 +34,14 @@ export interface BonusDef {
 export const BONUSES: BonusDef[] = [
   { key: "winner", label: "World Cup Winner", short: "Champion", points: 150, icon: "🏆", desc: "Your team lifts the trophy" },
   { key: "firstRed", label: "First Red Card", short: "First red", points: 50, icon: "🟥", desc: "First red card of the tournament" },
+  { key: "firstHatTrick", label: "First Hat-trick", short: "Hat-trick", points: 50, icon: "🎩", desc: "Team of the first player to score 3 in a game" },
   { key: "mostYellows", label: "Most Yellow Cards", short: "Most yellows", points: 40, icon: "🟨", desc: "Team with the most yellows overall" },
   { key: "firstOwnGoal", label: "First Own Goal", short: "First OG", points: 40, icon: "⚽", desc: "First own goal of the tournament" },
   { key: "topScorer", label: "Top Scorer's Team", short: "Golden Boot", points: 40, icon: "👟", desc: "Nation of the tournament's top scorer" },
+  { key: "biggestWin", label: "Biggest Win", short: "Biggest win", points: 40, icon: "💥", desc: "Largest winning margin in a single match" },
+  { key: "mostGoals", label: "Most Goals", short: "Most goals", points: 40, icon: "🥅", desc: "Team that scores the most goals overall" },
+  { key: "firstGoal", label: "First Goal", short: "First goal", points: 30, icon: "⚡", desc: "Team that scores the tournament's first goal" },
+  { key: "cleanSheets", label: "Most Clean Sheets", short: "Clean sheets", points: 30, icon: "🧤", desc: "Team that keeps the most clean sheets" },
 ];
 
 export const POT_TOTAL = BONUSES.reduce((s, b) => s + b.points, 0); // 320
@@ -177,8 +187,13 @@ export const SAMPLE_STATE: ScoringState = {
   outcomes: {
     winner: { team: "Brazil", detail: "Beat France 2–1 in the final" },
     firstRed: { team: "Uruguay", detail: "37' — Group H, Matchday 1" },
+    firstHatTrick: { team: "Portugal", detail: "C. Ronaldo — 3 vs Ghana" },
     mostYellows: { team: "Argentina", detail: "19 yellows" },
     firstOwnGoal: { team: "Switzerland", detail: "12' — Group B opener" },
     topScorer: { team: "France", detail: "K. Mbappé — 7 goals" },
+    biggestWin: { team: "Spain", detail: "5–0 vs Cape Verde" },
+    mostGoals: { team: "Brazil", detail: "14 goals" },
+    firstGoal: { team: "Mexico", detail: "9' — opening match" },
+    cleanSheets: { team: "Morocco", detail: "5 clean sheets" },
   },
 };

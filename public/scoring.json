@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-06-12T12:47:08.272Z",
-  "matchesPlayed": 2,
+  "updatedAt": "2026-06-15T09:18:09.634Z",
+  "matchesPlayed": 12,
   "source": "openfootball + manual cards",
   "outcomes": {
     "winner": null,
@@ -8,11 +8,31 @@
       "team": "South Africa",
       "detail": "First red card of the tournament"
     },
+    "firstHatTrick": null,
     "mostYellows": null,
-    "firstOwnGoal": null,
+    "firstOwnGoal": {
+      "team": "Paraguay",
+      "detail": "Damian Bobadilla (7') — USA v Paraguay"
+    },
     "topScorer": {
+      "team": "USA",
+      "detail": "Folarin Balogun — 2 goals"
+    },
+    "biggestWin": {
+      "team": "Germany",
+      "detail": "7–1 vs Curaçao"
+    },
+    "mostGoals": {
+      "team": "Germany",
+      "detail": "7 goals"
+    },
+    "firstGoal": {
       "team": "Mexico",
-      "detail": "Julián Quiñones — 1 goals"
+      "detail": "Julián Quiñones (9') vs South Africa"
+    },
+    "cleanSheets": {
+      "team": "Mexico",
+      "detail": "1 clean sheet"
     }
   }
 }

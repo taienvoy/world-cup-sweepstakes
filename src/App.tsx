@@ -2,6 +2,7 @@ import { Suspense, lazy, useEffect, useMemo, useState } from "react";
 import { Routes, Route } from "react-router-dom";
 import { DEFAULT_SEED, runDraw } from "./lib/draw";
 import { loadFixturesSync, refreshFixtures, type Match } from "./lib/fixtures";
+import { loadScoring, EMPTY_STATE, type ScoringState } from "./lib/scoring";
 import Background from "./components/Background";
 import Nav from "./components/Nav";
 import Dashboard from "./pages/Dashboard";
@@ -21,9 +22,13 @@ export default function App() {
   const draw = useMemo(() => runDraw(seed), [seed]);
 
   const [fixtures, setFixtures] = useState<Match[]>(() => loadFixturesSync());
+  const [scoring, setScoring] = useState<ScoringState>(EMPTY_STATE);
   useEffect(() => {
     let alive = true;
-    const pull = () => refreshFixtures().then((f) => alive && setFixtures(f));
+    const pull = () => {
+      refreshFixtures().then((f) => alive && setFixtures(f));
+      loadScoring().then((s) => alive && setScoring(s));
+    };
     pull();
     // Re-fetch scores/results periodically so the board updates without a reload.
     const id = setInterval(pull, 120_000);
@@ -47,8 +52,14 @@ export default function App() {
       <Background />
       <Nav />
       <Routes>
-        <Route path="/" element={<Dashboard draw={draw} fixtures={fixtures} />} />
-        <Route path="/leaderboard" element={<Scoring draw={draw} fixtures={fixtures} />} />
+        <Route
+          path="/"
+          element={<Dashboard draw={draw} fixtures={fixtures} scoring={scoring} />}
+        />
+        <Route
+          path="/leaderboard"
+          element={<Scoring draw={draw} fixtures={fixtures} scoring={scoring} />}
+        />
         <Route
           path="/draw"
           element={

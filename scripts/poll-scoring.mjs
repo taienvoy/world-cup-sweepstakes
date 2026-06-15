@@ -56,9 +56,14 @@ if (process.argv.includes("--sample")) {
     outcomes: {
       winner: { team: "Brazil", detail: "Beat France 2–1 in the final" },
       firstRed: { team: "Uruguay", detail: "37' — Group H, Matchday 1" },
+      firstHatTrick: { team: "Portugal", detail: "C. Ronaldo — 3 vs Ghana" },
       mostYellows: { team: "Argentina", detail: "19 yellows" },
       firstOwnGoal: { team: "Switzerland", detail: "12' — Group B opener" },
       topScorer: { team: "France", detail: "K. Mbappé — 7 goals" },
+      biggestWin: { team: "Spain", detail: "5–0 vs Cape Verde" },
+      mostGoals: { team: "Brazil", detail: "14 goals" },
+      firstGoal: { team: "Mexico", detail: "9' vs South Africa" },
+      cleanSheets: { team: "Morocco", detail: "5 clean sheets" },
     },
   });
   process.exit(0);
@@ -115,19 +120,94 @@ async function main() {
     };
   }
 
+  const byDate = [...played].sort((a, b) => ts(a) - ts(b));
+
+  // ---- First goal: earliest goal chronologically, credited to the team it counted for ----
+  const allGoals = [];
+  for (const m of played) {
+    for (const g of m.goals1 ?? []) allGoals.push({ team: m.team1, opp: m.team2, g, t: ts(m), min: g.minute ?? 999 });
+    for (const g of m.goals2 ?? []) allGoals.push({ team: m.team2, opp: m.team1, g, t: ts(m), min: g.minute ?? 999 });
+  }
+  allGoals.sort((a, b) => a.t - b.t || a.min - b.min);
+  let firstGoal = null;
+  if (allGoals[0]) {
+    const f = allGoals[0];
+    firstGoal = { team: f.team, detail: `${f.g.name} (${f.g.minute}') vs ${f.opp}` };
+  }
+
+  // ---- Biggest win: largest winning margin in a single match ----
+  let biggestWin = null;
+  let bestMargin = 0;
+  for (const m of byDate) {
+    const [a, b] = m.score.ft;
+    const margin = Math.abs(a - b);
+    if (margin > bestMargin) {
+      bestMargin = margin;
+      const won = a > b;
+      biggestWin = {
+        team: won ? m.team1 : m.team2,
+        detail: `${Math.max(a, b)}–${Math.min(a, b)} vs ${won ? m.team2 : m.team1}`,
+      };
+    }
+  }
+
+  // ---- Most goals scored (team total across all matches) ----
+  const scored = {};
+  for (const m of played) {
+    scored[m.team1] = (scored[m.team1] || 0) + m.score.ft[0];
+    scored[m.team2] = (scored[m.team2] || 0) + m.score.ft[1];
+  }
+  let mostGoals = null;
+  const topScored = Object.entries(scored).sort((a, b) => b[1] - a[1])[0];
+  if (topScored && topScored[1] > 0) mostGoals = { team: topScored[0], detail: `${topScored[1]} goals` };
+
+  // ---- Most clean sheets (matches conceding zero) ----
+  const sheets = {};
+  for (const m of played) {
+    if (m.score.ft[1] === 0) sheets[m.team1] = (sheets[m.team1] || 0) + 1;
+    if (m.score.ft[0] === 0) sheets[m.team2] = (sheets[m.team2] || 0) + 1;
+  }
+  let cleanSheets = null;
+  const topSheet = Object.entries(sheets).sort((a, b) => b[1] - a[1])[0];
+  if (topSheet && topSheet[1] > 0) {
+    cleanSheets = { team: topSheet[0], detail: `${topSheet[1]} clean sheet${topSheet[1] === 1 ? "" : "s"}` };
+  }
+
+  // ---- First hat-trick: earliest match with a player scoring 3+ (non-own) ----
+  let firstHatTrick = null;
+  const hatInSide = (goals, team, opp) => {
+    const byPlayer = {};
+    for (const g of goals ?? []) if (!g.owngoal && g.name) byPlayer[g.name] = (byPlayer[g.name] || 0) + 1;
+    const hat = Object.entries(byPlayer).find(([, n]) => n >= 3);
+    return hat ? { team, detail: `${hat[0]} — ${hat[1]} vs ${opp}` } : null;
+  };
+  for (const m of byDate) {
+    const h = hatInSide(m.goals1, m.team1, m.team2) || hatInSide(m.goals2, m.team2, m.team1);
+    if (h) {
+      firstHatTrick = h;
+      break;
+    }
+  }
+
   // ---- Manual overrides (cards live here; any key wins over the computed value) ----
   const ov = loadOverrides();
+  const pick = (key, computed) => ov[key] ?? computed;
 
   writeOut({
     updatedAt: new Date().toISOString(),
     matchesPlayed: played.length,
     source: "openfootball" + (ov.firstRed || ov.mostYellows ? " + manual cards" : ""),
     outcomes: {
-      winner: ov.winner ?? winner,
+      winner: pick("winner", winner),
       firstRed: ov.firstRed ?? null,
+      firstHatTrick: pick("firstHatTrick", firstHatTrick),
       mostYellows: ov.mostYellows ?? null,
-      firstOwnGoal: ov.firstOwnGoal ?? firstOwnGoal,
-      topScorer: ov.topScorer ?? topScorer,
+      firstOwnGoal: pick("firstOwnGoal", firstOwnGoal),
+      topScorer: pick("topScorer", topScorer),
+      biggestWin: pick("biggestWin", biggestWin),
+      mostGoals: pick("mostGoals", mostGoals),
+      firstGoal: pick("firstGoal", firstGoal),
+      cleanSheets: pick("cleanSheets", cleanSheets),
     },
   });
 }
