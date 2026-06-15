@@ -36,5 +36,7 @@ export const PINNED: Record<string, string> = {
 export const PREDICTIONS: Record<string, [string, string, string]> = {
   lydia: ["France", "Senegal", "Ivory Coast"],
   taiwo: ["England", "France", "Netherlands"],
+  francis: ["France", "Germany", "Argentina"],
+  emily: ["England", "France", "Spain"],
   // others TBC
 };
