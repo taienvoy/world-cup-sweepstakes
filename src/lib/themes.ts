@@ -16,4 +16,4 @@ export const THEMES: ThemeDef[] = [
   { id: "sunset", name: "Sunset", blurb: "Amber & rose", swatches: ["#ffb24a", "#ff4d6d", "#1d0a24"] },
 ];
 
-export const DEFAULT_THEME = "aurora";
+export const DEFAULT_THEME = "envoy";

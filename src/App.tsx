@@ -5,6 +5,7 @@ import { loadFixturesSync, refreshFixtures, type Match } from "./lib/fixtures";
 import { loadScoring, EMPTY_STATE, type ScoringState } from "./lib/scoring";
 import Background from "./components/Background";
 import Nav from "./components/Nav";
+import Kiosk from "./components/Kiosk";
 import Dashboard from "./pages/Dashboard";
 import Scoring from "./pages/Scoring";
 
@@ -12,6 +13,20 @@ import Scoring from "./pages/Scoring";
 const DrawPage = lazy(() => import("./pages/DrawPage"));
 
 const SEED_KEY = "wc2026-seed";
+const KIOSK_KEY = "wc2026-kiosk";
+
+// Kiosk can be turned on via ?kiosk (optionally ?kiosk=12 for seconds-per-page),
+// or remembered in localStorage so an office screen stays in rotation across reloads.
+function readKioskParam(): { on: boolean; secs?: number } {
+  const hash = window.location.hash;
+  const qi = hash.indexOf("?");
+  const params = new URLSearchParams(qi >= 0 ? hash.slice(qi + 1) : "");
+  const v = params.get("kiosk");
+  const secs = v && /^\d+$/.test(v) ? Math.max(5, parseInt(v, 10)) : undefined;
+  const on = params.has("kiosk") || localStorage.getItem(KIOSK_KEY) === "1";
+  return { on, secs };
+}
+const KIOSK_INIT = readKioskParam();
 
 export default function App() {
   const [seed, setSeed] = useState<number>(() => {
@@ -38,6 +53,12 @@ export default function App() {
     };
   }, []);
 
+  const [kiosk, setKioskState] = useState(KIOSK_INIT.on);
+  const setKiosk = (on: boolean) => {
+    setKioskState(on);
+    localStorage.setItem(KIOSK_KEY, on ? "1" : "0");
+  };
+
   const reroll = (next: number) => {
     setSeed(next);
     localStorage.setItem(SEED_KEY, String(next));
@@ -50,7 +71,8 @@ export default function App() {
   return (
     <div className="relative min-h-screen">
       <Background />
-      <Nav />
+      <Nav kiosk={kiosk} onToggleKiosk={() => setKiosk(!kiosk)} />
+      <Kiosk active={kiosk} seconds={KIOSK_INIT.secs} onExit={() => setKiosk(false)} />
       <Routes>
         <Route
           path="/"

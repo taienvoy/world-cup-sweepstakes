@@ -9,7 +9,13 @@ const linkBase =
 const tab = ({ isActive }: { isActive: boolean }) =>
   `${linkBase} ${isActive ? "bg-white/90 text-pitch-950" : "text-white/70 hover:text-white"}`;
 
-export default function Nav() {
+export default function Nav({
+  kiosk,
+  onToggleKiosk,
+}: {
+  kiosk: boolean;
+  onToggleKiosk: () => void;
+}) {
   const [theme, setTheme] = useTheme();
 
   return (
@@ -35,6 +41,15 @@ export default function Nav() {
           </NavLink>
         </nav>
         <ThemePicker theme={theme} setTheme={setTheme} />
+        <button
+          onClick={onToggleKiosk}
+          title="Kiosk mode — auto-rotate pages for a wall display"
+          className={`glass flex h-10 items-center gap-2 rounded-full px-3 text-sm font-medium transition-colors ${
+            kiosk ? "text-gold" : "text-white/70 hover:text-white"
+          }`}
+        >
+          {kiosk ? "■ Stop" : "▶ Kiosk"}
+        </button>
       </div>
     </header>
   );
