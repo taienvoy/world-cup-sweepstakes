@@ -40,5 +40,6 @@ export const PREDICTIONS: Record<string, [string, string, string]> = {
   emily: ["England", "France", "Spain"],
   quentin: ["Brazil", "France", "USA"],
   peter: ["Spain", "Netherlands", "Mexico"],
+  jot: ["Spain", "France", "England"],
   // others TBC
 };
