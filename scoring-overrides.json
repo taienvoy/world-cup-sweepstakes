@@ -3,5 +3,6 @@
   "_example": { "firstRed": { "team": "Uruguay", "detail": "37' — Ronald Araújo vs Spain" } },
 
   "firstRed": { "team": "South Africa", "detail": "First red card of the tournament" },
+  "firstHatTrick": { "team": "Argentina", "detail": "Lionel Messi — 3 vs Algeria" },
   "mostYellows": null
 }

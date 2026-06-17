@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-06-15T15:23:13.285Z",
-  "matchesPlayed": 12,
+  "updatedAt": "2026-06-17T09:05:31.535Z",
+  "matchesPlayed": 20,
   "source": "openfootball + manual cards",
   "outcomes": {
     "winner": null,
@@ -8,15 +8,18 @@
       "team": "South Africa",
       "detail": "First red card of the tournament"
     },
-    "firstHatTrick": null,
+    "firstHatTrick": {
+      "team": "Argentina",
+      "detail": "Lionel Messi — 3 vs Algeria"
+    },
     "mostYellows": null,
     "firstOwnGoal": {
       "team": "Paraguay",
       "detail": "Damian Bobadilla (7') — USA v Paraguay"
     },
     "topScorer": {
-      "team": "USA",
-      "detail": "Folarin Balogun — 2 goals"
+      "team": "Argentina",
+      "detail": "Lionel Messi — 3 goals"
     },
     "biggestWin": {
       "team": "Germany",
